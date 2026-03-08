@@ -115,3 +115,94 @@ config.tex_template = template
             report.append(f"{i}. ✅ {fix}")
         
         return "\n".join(report)
+    
+    def fix_from_suggestions(self, suggestions: List[str]) -> Optional[str]:
+        """从 AI 建议修复脚本"""
+        self.fixes_applied = []
+        
+        for suggestion in suggestions:
+            suggestion_lower = suggestion.lower()
+            
+            # 字体相关
+            if "字体" in suggestion_lower or "font" in suggestion_lower:
+                if "减小" in suggestion_lower or "smaller" in suggestion_lower:
+                    self._reduce_font_size()
+                    self.fixes_applied.append("减小字体大小")
+            
+            # 位置相关
+            if "位置" in suggestion_lower or "position" in suggestion_lower:
+                if "右" in suggestion_lower or "right" in suggestion_lower:
+                    self._adjust_position("right")
+                    self.fixes_applied.append("向右调整位置")
+                elif "左" in suggestion_lower or "left" in suggestion_lower:
+                    self._adjust_position("left")
+                    self.fixes_applied.append("向左调整位置")
+                elif "上" in suggestion_lower or "up" in suggestion_lower:
+                    self._adjust_position("up")
+                    self.fixes_applied.append("向上调整位置")
+                elif "下" in suggestion_lower or "down" in suggestion_lower:
+                    self._adjust_position("down")
+                    self.fixes_applied.append("向下调整位置")
+            
+            # 重叠相关
+            if "重叠" in suggestion_lower or "overlap" in suggestion_lower:
+                self._reduce_font_size()
+                self._increase_spacing()
+                self.fixes_applied.append("减小字体并增加间距")
+            
+            # 乱码相关
+            if "乱码" in suggestion_lower or "garble" in suggestion_lower or "xelatex" in suggestion_lower:
+                if "xelatex" not in self.fixed_content:
+                    self.fixed_content = self._add_xelatex_config()
+                    self.fixes_applied.append("添加 xelatex 中文支持")
+            
+            # 对比度相关
+            if "对比度" in suggestion_lower or "contrast" in suggestion_lower:
+                self._improve_contrast()
+                self.fixes_applied.append("改善对比度")
+        
+        if not self.fixes_applied:
+            return None
+        
+        # 保存修复后的脚本
+        fixed_path = self.script_path.parent / f"{self.script_path.stem}_fixed{self.script_path.suffix}"
+        fixed_path.write_text(self.fixed_content, encoding='utf-8')
+        
+        print(f"修复后的脚本已保存到：{fixed_path}")
+        return str(fixed_path)
+    
+    def _reduce_font_size(self):
+        """减小字体大小"""
+        import re
+        def reduce_font(match):
+            size = int(match.group(1))
+            new_size = max(size - 2, 20)
+            return f"font_size={new_size}"
+        self.fixed_content = re.sub(r'font_size=(\d+)', reduce_font, self.fixed_content, count=10)
+    
+    def _adjust_position(self, direction: str):
+        """调整位置"""
+        adjustments = {
+            "right": [("RIGHT * 0.25", "RIGHT * 0.5"), ("RIGHT * 0.5", "RIGHT * 0.75")],
+            "left": [("LEFT * 0.25", "LEFT * 0.5"), ("LEFT * 0.5", "LEFT * 0.75")],
+            "up": [("UP * 0.5", "UP * 1.0"), ("UP * 1.0", "UP * 1.5")],
+            "down": [("DOWN * 0.5", "DOWN * 1.0"), ("DOWN * 1.0", "DOWN * 1.5")]
+        }
+        
+        for old, new in adjustments.get(direction, []):
+            if old in self.fixed_content:
+                self.fixed_content = self.fixed_content.replace(old, new)
+                break
+    
+    def _increase_spacing(self):
+        """增加间距"""
+        self.fixed_content = self.fixed_content.replace("buff=0.45", "buff=0.55")
+        self.fixed_content = self.fixed_content.replace("buff=0.55", "buff=0.65")
+    
+    def _improve_contrast(self):
+        """改善对比度"""
+        if 'background_color = "#1a1a2e"' in self.fixed_content:
+            self.fixed_content = self.fixed_content.replace(
+                'background_color = "#1a1a2e"',
+                'background_color = "#0a0a15"'
+            )
