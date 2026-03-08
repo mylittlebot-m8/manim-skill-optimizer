@@ -1,0 +1,26 @@
+{
+  "name": "manim-optimizer",
+  "version": "1.0.0",
+  "description": "Manim 脚本自动优化 - 视觉识别乱码和重叠问题并自动修复",
+  "author": "MyLittleBot",
+  "license": "MIT",
+  "entry": "skills/manim_optimizer.py",
+  "triggers": [
+    "优化.*manim",
+    "检测.*乱码",
+    "修复.*重叠",
+    "自动.*脚本",
+    "visual.*check",
+    "optimize.*manim"
+  ],
+  "config": {
+    "max_iterations": 3,
+    "detection_threshold": 0.6,
+    "auto_rerender": true
+  },
+  "dependencies": [
+    "opencv-python",
+    "paddleocr",
+    "numpy"
+  ]
+}
